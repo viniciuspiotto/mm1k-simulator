@@ -21,92 +21,97 @@ void update_little_only_sum_area(little_metric *lm, double elapsed_time) {
     lm->prev_time = elapsed_time;
 }
 
-void simulation(unsigned int interation, double simulation_time, double arrival_time_avarage, double  service_time_avarage, char result_metric_file_path[], char raw_metric_file_path[]) {
-    FILE * metric = fopen(result_metric_file_path, "w");
-    FILE *raw_metric = fopen(raw_metric_file_path, "a+");
+void simulation(unsigned int interation, double simulation_time, Queue * queues, double  service_time_avarage) {
 
-    fseek(raw_metric, 0, SEEK_END);
-    long file_size = ftell(raw_metric);
-    if (file_size == 0) {
-        fprintf(raw_metric, "N,Final_E[N],Final_E[W]\n");
-    }
-    fseek(raw_metric, 0, SEEK_END);
-
-    fprintf(metric, "Time,E[N],E[W],Error_little\n");
-
-    unsigned int qtd_person = 0;
-    double elapsed_time = 0.0;
-    unsigned long int queue = 0;
-    unsigned long int longest_queue = 0;
-    double timer = 10.0;
+    printf("\n\tIteration: [%d]\n", interation);
+    // unsigned int qtd_person = 0;
+    // unsigned long int queue = 0, longest_queue = 0;
+    //double timer = 10.0, 
     double exit_time = DBL_MAX;
+    bool person_begin_served = false;
 
-    // little metrics
-    little_metric E_N;
-    new_little_metric(&E_N);
-    little_metric E_W_ARRIVAL;
-    new_little_metric(&E_W_ARRIVAL);
-    little_metric E_W_EXIT;
-    new_little_metric(&E_W_EXIT);
+    Elapsed_Time current_elapsed_time;
+    current_elapsed_time.time = 0.0;
+    current_elapsed_time.index = -1;
+    int highest_wait_person = 0;
 
-    double temporary_E_N = 0.0;
-    double temporary_E_W = 0.0;
-    double temporary_lambda = 0.0;
+    //little_metric E_N;
+    //new_little_metric(&E_N);
+    //little_metric E_W_ARRIVAL;
+    //new_little_metric(&E_W_ARRIVAL);
+    //little_metric E_W_EXIT;
+    //new_little_metric(&E_W_EXIT);
+
+    //double temporary_E_N = 0.0;
+    //double temporary_E_W = 0.0;
+    //double temporary_lambda = 0.0;
 
     // start first arrival
-    double next_arrival_time = generate_time(service_time_avarage);
-    qtd_person++;
+    double next_arrival_time[] = {generate_time(queues[0].arrival_time_avarage),
+                                  generate_time(queues[1].arrival_time_avarage),
+                                  generate_time(queues[2].arrival_time_avarage)};
 
-    while(elapsed_time <= simulation_time) {
+    while(current_elapsed_time.time <= simulation_time) {
+
         // will the timer or the next arrival or exit happen first?
-        elapsed_time = min(timer, min(next_arrival_time, exit_time));
+        person_begin_served ? 
+            min_four(&current_elapsed_time, 
+                next_arrival_time[0], 
+                next_arrival_time[1], 
+                next_arrival_time[2], 
+                exit_time) :
+            min_three(&current_elapsed_time,
+                next_arrival_time[0], 
+                next_arrival_time[1], 
+                next_arrival_time[2]);
 
-        if (elapsed_time == timer) {
-            update_little_only_sum_area(&E_N, elapsed_time);
-            update_little_only_sum_area(&E_W_ARRIVAL, elapsed_time);
-            update_little_only_sum_area(&E_W_EXIT, elapsed_time);
+        if (current_elapsed_time.index != 3){
 
-            temporary_E_N = E_N.sum_area / elapsed_time;
-            temporary_E_W = E_W_ARRIVAL.qnt_persons != 0 ? (E_W_ARRIVAL.sum_area - E_W_EXIT.sum_area) / E_W_ARRIVAL.qnt_persons : 0.0;
-            temporary_lambda = E_W_ARRIVAL.qnt_persons / elapsed_time;
-
-            fprintf(metric, "%lf,%lf,%lf,%lf\n", elapsed_time, temporary_E_N, temporary_E_W, fabs(temporary_E_N - temporary_lambda * temporary_E_W));
-            timer += 10;
-        } else if(elapsed_time == next_arrival_time) { // arrived people
-            // no one is in queue
-            if (!hasServices) {
-                exit_time = elapsed_time + generate_time(service_time_avarage);
+            if (!person_begin_served) {
+                exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
+                person_begin_served = true;
             } else {
-                // add new person to our respective time
+                Element new_element;
+                new_element.arrival_time = current_elapsed_time.time;
+                insert(&queues[current_elapsed_time.index], new_element);
+                // TODO : returns boolean, but we don't use it for anything yet if we can't insert it
+                next_arrival_time[current_elapsed_time.index] = 
+                    current_elapsed_time.time + 
+                    generate_time(queues[current_elapsed_time.index].arrival_time_avarage);
+
             }
+            
+            // TODO :  do littles law here
+            // update_little_information(&E_N, current_elapsed_time.time, true);
+            // update_little_information(&E_W_ARRIVAL, current_elapsed_time.time, true);
 
-            next_arrival_time = elapsed_time + generate_time(arrival_time_avarage);
-
-            update_little_information(&E_N, elapsed_time, true);
-            update_little_information(&E_W_ARRIVAL, elapsed_time, true);
-        } else { // exit people
-            queue--;
+        } else {
+            
             exit_time = DBL_MAX;
 
-            if (queue1.current_size || queue2 || queue3) {
-                hasServices = true;
-
-                highest_wait_person = less_time(queue1[0].arrived_time, queue2, queue3);
-                exit_time = elapsed_time + generate_time(service_time_avarage);
+            if (queues[0].current_size || queues[1].current_size || queues[2].current_size) {
+                person_begin_served = true;
+                // TODO : returns the index of the queue from which I have to remove the element
+                // TODO: Temporary function, with poor practices, used only for compilation !!!
+                highest_wait_person = less_time(queues[0], queues[1], queues[2]);
+                // TODO : returns boolean, but we don't use it for anything yet if we can't remove it
+                dequeue(&queues[highest_wait_person]);
+                exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
             } else {
-                hasServices = false;
+                person_begin_served = false;
             }
 
-            update_little_information(&E_N, elapsed_time, false);
-            update_little_information(&E_W_EXIT, elapsed_time, true);
+            // do littles law here
+            // update_little_information(&E_N, current_elapsed_time.time, false);
+            // update_little_information(&E_W_EXIT, current_elapsed_time.time, true);
+            
         }
     }
 
-    E_W_ARRIVAL.sum_area += (elapsed_time - E_W_ARRIVAL.prev_time) * E_W_ARRIVAL.qnt_persons;
-    E_W_EXIT.sum_area += (elapsed_time - E_W_EXIT.prev_time) * E_W_EXIT.qnt_persons;
+    //E_W_ARRIVAL.sum_area += (elapsed_time - E_W_ARRIVAL.prev_time) * E_W_ARRIVAL.qnt_persons;
+    //E_W_EXIT.sum_area += (elapsed_time - E_W_EXIT.prev_time) * E_W_EXIT.qnt_persons;
 
-    fprintf(raw_metric, "%d,%lf,%lf\n", interation, E_N.sum_area / elapsed_time, (E_W_ARRIVAL.sum_area - E_W_EXIT.sum_area) / E_W_ARRIVAL.qnt_persons);
+    //fclose(metric);
+    //fclose(raw_metric);
 
-    fclose(metric);
-    fclose(raw_metric);
 }
