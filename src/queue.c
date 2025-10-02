@@ -8,10 +8,10 @@ bool is_empty(Queue * queue){
     return (queue->current_size == 0);
 }
 
-void start_queue (Queue * queue, int size, double arrival_time_avarage){
+void start_queue (Queue * queue, int size, double arrival_time_rate){
     queue->max_size = size;
     queue->current_size = 0;
-    queue->arrival_time_avarage = arrival_time_avarage;
+    queue->arrival_time_avarage = 1.0 / arrival_time_rate;
     queue->first = 0;
     queue->last = -1;
     queue->qnt_persons = 0;
@@ -24,19 +24,19 @@ bool insert(Queue * queue, Element element){
         queue->queue[queue->last] = element;
         queue->current_size++;
         return true;
-    } else {
-        return false;
+    }
+    return false;
+}
+
+void dequeue(Queue * queue) {
+    if (!is_empty(queue)) {
+        queue->first = (queue->first + 1) % queue->max_size;
+        queue->current_size--;    
     }
 }
 
-bool dequeue (Queue * queue){
-    if(is_empty(queue)){
-        return false;
-    } else {
-        queue->first = (queue->first + 1) % queue->max_size;
-        queue->current_size--;
-        return true;
-    }
+Element get_first(Queue * queue) {
+    return queue->queue[queue->first];
 }
 
 Queue * start_queues (int amount, double * arrivals_time_avarage, int size){

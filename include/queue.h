@@ -17,11 +17,10 @@ typedef struct {
     Element * queue;
 } Queue;
 
-bool is_full(Queue * queue);
 bool is_empty(Queue * queue);
-void start_queue (Queue * queue, int size, double arrival_time_avarage);
 bool insert(Queue * queue, Element element);
-bool dequeue(Queue * queue);
+void dequeue(Queue * queue);
+Element get_first(Queue * queue);
 Queue * start_queues (int amount, double * arrivals_time_avarage, int size);
 
 #endif

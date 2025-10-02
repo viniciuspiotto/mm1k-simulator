@@ -1,33 +1,51 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #include "utils.h"
 #include "queue.h"
 #include "simulation.h"
+#include "min_heap.h"
 
 const double SIMULATION_TIME = 86400.0; // 24 * 60 * 60 (24 hours)
+const unsigned int QUEUE_AMOUNT = 3;
 
 int main() {
 
     srand(time(NULL));
-    // make this a input
+    double service_time_rate;
+    double arrival_time_rate[QUEUE_AMOUNT];
+    unsigned int n;
 
-    const double SERVICE_TIME_RATE = 10.0;
-    double service_time_avarage = 1.0 / SERVICE_TIME_RATE;
-    //double occupation = 0.8; // 80%
-    unsigned int n = 1; // number of rounds - is one only for tests
-    // Different occupations should have different arrival time rates.
-    double arrival_time_rate[3] = {service_time_avarage * 0.8, service_time_avarage * 0.9, service_time_avarage * 0.95};
-    Queue * queues = start_queues(3, arrival_time_rate, 100);
-
-    //printf("[INFO]: E[N] = %.3f | E[W] = %.3f\n", occupation/(1 - occupation), 1 / (service_time_avarage - arrival_time_rate));
-    //printf("[INFO]: λ = %.3f | μ = %.3f\n", arrival_time_rate, service_time_avarage);
+    printf("--- Configuração da Simulação ---\n");
     
+    printf("Digite a taxa de serviço (μ): ");
+    scanf("%lf", &service_time_rate);
+    
+    const double service_time_avarage = 1.0 / service_time_rate;
+
+    printf("Digite a taxa de chegada para a Fila 1 (λ1): ");
+    scanf("%lf", &arrival_time_rate[0]);
+
+    printf("Digite a taxa de chegada para a Fila 2 (λ2): ");
+    scanf("%lf", &arrival_time_rate[1]);
+
+    printf("Digite a taxa de chegada para a Fila 3 (λ3): ");
+    scanf("%lf", &arrival_time_rate[2]);
+
+    printf("Número de iterações (n): ");
+    scanf("%u", &n);
+
+    printf("----------------------------------\n\n");
+    
+    Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, 100);
+
     for (unsigned int i = 1; i <= n; i++) {
         simulation(i, SIMULATION_TIME, queues, service_time_avarage);
     }
-    printf("\n\tSimulation completed successfully!\n\n");
+
+    free(queues);
+
     return 0;
 }
+
