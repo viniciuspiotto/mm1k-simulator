@@ -56,10 +56,13 @@ void simulation(unsigned int interation, double simulation_time, Queue * queues,
     while(current_elapsed_time.time <= simulation_time) {
         
         server_busy ? 
-            min_four(&current_elapsed_time, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2], exit_time) :
-            min_three(&current_elapsed_time, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2]);
+            min_times(&current_elapsed_time, 4, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2], exit_time) :
+            min_times(&current_elapsed_time, 3, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2]);
+
+        printf("%d %f\n", current_elapsed_time.index, current_elapsed_time.time);
 
         if (current_elapsed_time.index != 3) {
+            
             int queue_index = current_elapsed_time.index;
 
             new_element.arrival_time = current_elapsed_time.time;
@@ -83,6 +86,7 @@ void simulation(unsigned int interation, double simulation_time, Queue * queues,
                 update_little_information(&E_N, current_elapsed_time.time, true);
                 update_little_information(&E_W_ARRIVAL, current_elapsed_time.time, true);   
             }
+
         } else {
             
             total_departures++;

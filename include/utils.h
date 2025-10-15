@@ -13,8 +13,6 @@ typedef struct {
 
 double random_u();
 double generate_time(double l);
-void min_with_index(Elapsed_Time * current_elapsed_time, double a, int index_a, double b, int index_b);
-void min_four(Elapsed_Time * current_elapsed_time, double a, double b, double c, double d);
-void min_three(Elapsed_Time * current_elapsed_time, double a, double b, double c);
+void min_times(Elapsed_Time *result, int count, ...);
 
 #endif

@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "queue.h"
 #include "simulation.h"
+#include "simulation_round_robin.h"
 #include "min_heap.h"
 
 const double SIMULATION_TIME = 86400.0; // 24 * 60 * 60 (24 hours)
@@ -41,7 +42,7 @@ int main() {
     Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, 100);
 
     for (unsigned int i = 1; i <= n; i++) {
-        simulation(i, SIMULATION_TIME, queues, service_time_avarage);
+        simulation_round_robin(i, SIMULATION_TIME, queues, service_time_avarage, 10.0);
     }
 
     free(queues);

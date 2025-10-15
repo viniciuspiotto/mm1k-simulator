@@ -16,5 +16,8 @@ typedef struct {
 } little_metric;
 
 void simulation(unsigned int interation, double simulation_time, Queue * queues, double  service_time_avarage);
+void new_little_metric(little_metric *lm);
+void update_little_information(little_metric *lm, double elapsed_time, bool isIncrement);
+void update_little_only_sum_area(little_metric *lm, double elapsed_time);
 
 #endif

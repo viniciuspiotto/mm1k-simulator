@@ -35,6 +35,26 @@ void dequeue(Queue * queue) {
     }
 }
 
+Element * dequeue_with_return (Queue * queue) {
+
+    if (!is_empty(queue)) {
+
+        Element * element_dequeue = malloc(sizeof(Element));
+
+        element_dequeue->arrival_time = queue->queue[queue->first].arrival_time;
+        element_dequeue->exit_time = queue->queue[queue->first].exit_time;
+        element_dequeue->time_in_service = queue->queue[queue->first].time_in_service;
+
+        queue->first = (queue->first + 1) % queue->max_size;
+        queue->current_size--; 
+        
+        return element_dequeue;
+    }
+
+    return NULL;
+
+}
+
 Element get_first(Queue * queue) {
     return queue->queue[queue->first];
 }
