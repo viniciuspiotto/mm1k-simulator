@@ -20,5 +20,6 @@ typedef struct {
 MinHeap* create_min_heap(int capacity);
 void insert_node(MinHeap* minHeap, Node* node);
 int extract_min(MinHeap* minHeap);
+void free_min_heap(MinHeap* minHeap);
 
 #endif

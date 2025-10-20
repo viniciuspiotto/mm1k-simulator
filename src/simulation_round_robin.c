@@ -1,7 +1,4 @@
-#include <stdio.h>
-
 #include "simulation_round_robin.h"
-#include "little.h"
 
 #define DBL_MAX __DBL_MAX__
 

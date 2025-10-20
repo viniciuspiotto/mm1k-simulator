@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include "simulation_longer_wait.h"
-#include "little.h"
 
 #define DBL_MAX __DBL_MAX__
 
@@ -134,9 +132,5 @@ void simulation_longer_wait(unsigned int interation, double simulation_time, Que
     printf("E[W]: %.3f\n", E_W_FINAL);
     printf("little: %.3f\n", erro_little);
 
-    for (int i = 0; i < min_heap->size; ++i) {
-        free(min_heap->arr[i]);
-    }
-    free(min_heap->arr);
-    free(min_heap);
+    free_min_heap(min_heap);
 }

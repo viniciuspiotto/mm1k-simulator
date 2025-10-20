@@ -7,6 +7,7 @@
 
 #include "utils.h"
 #include "queue.h"
+#include "little.h"
 #include "min_heap.h"
 
 void simulation_longer_wait(unsigned int interation, double simulation_time, Queue * queues, double  service_time_avarage);

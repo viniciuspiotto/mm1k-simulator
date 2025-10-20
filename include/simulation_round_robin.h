@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "utils.h"
+#include "little.h"
 #include "queue.h"
 
 void simulation_round_robin(unsigned int interation, double simulation_time, Queue * queues, double service_time_avarage);

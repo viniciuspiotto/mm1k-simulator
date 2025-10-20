@@ -71,3 +71,11 @@ int extract_min(MinHeap* minHeap) {
 
     return root_node->index;
 }
+
+void free_min_heap(MinHeap* minHeap) {
+    if (minHeap == NULL) {
+        return;
+    }
+    free(minHeap->arr);
+    free(minHeap);
+}
