@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "min_heap.h": "c",
+        "math.h": "c",
+        "simulation_longer_wait.h": "c",
+        "simulation_round_robin.h": "c"
     }
 }

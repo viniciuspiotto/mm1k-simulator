@@ -7,8 +7,7 @@
 
 #include "utils.h"
 #include "queue.h"
-#include "min_heap.h"
 
-void simulation_round_robin(unsigned int interation, double simulation_time, Queue * queues, double service_time_avarage, double quantum);
+void simulation_round_robin(unsigned int interation, double simulation_time, Queue * queues, double service_time_avarage);
 
 #endif

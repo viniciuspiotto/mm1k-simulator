@@ -1,5 +1,6 @@
-#include "simulation.h"
 #include <stdio.h>
+#include "simulation_longer_wait.h"
+#include "little.h"
 
 #define DBL_MAX __DBL_MAX__
 
@@ -22,7 +23,7 @@ void update_little_only_sum_area(little_metric *lm, double elapsed_time) {
     lm->prev_time = elapsed_time;
 }
 
-void simulation(unsigned int interation, double simulation_time, Queue * queues, double service_time_avarage) {
+void simulation_longer_wait(unsigned int interation, double simulation_time, Queue * queues, double service_time_avarage) {
 
     printf("\nInteração: [%d]\n", interation);
     

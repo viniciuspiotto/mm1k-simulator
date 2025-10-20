@@ -9,8 +9,6 @@
 
 typedef struct {
     double arrival_time;
-    double exit_time;
-    double time_in_service;
 } Element;
 
 typedef struct {
@@ -23,7 +21,6 @@ bool is_empty(Queue * queue);
 bool insert(Queue * queue, Element element);
 void dequeue(Queue * queue);
 Element get_first(Queue * queue);
-Element * dequeue_with_return (Queue * queue);
 Queue * start_queues (int amount, double * arrivals_time_avarage, int size);
 
 #endif

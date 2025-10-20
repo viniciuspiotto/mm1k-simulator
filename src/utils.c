@@ -3,8 +3,6 @@
 
 #include "utils.h"
 
-#include "simulation.h"
-
 #define	RAND_MAX 2147483647
 
 double random_u() {
