@@ -21,6 +21,7 @@ bool is_empty(Queue * queue);
 bool insert(Queue * queue, Element element);
 Element * dequeue(Queue * queue);
 Element get_first(Queue * queue);
+void start_queue (Queue * queue, int size, double arrival_time_rate);
 Queue * start_queues (int amount, double * arrivals_time_avarage, int size);
 
 #endif

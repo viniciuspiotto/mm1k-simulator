@@ -15,6 +15,7 @@ typedef struct {
     double total_lateness_request_met;
     double total_requests_arrive_in_queue;
     unsigned int schedule_size;
+    Queue queue;
 } Metrics;
 
 Metrics * start_metrics(int amount, int size);

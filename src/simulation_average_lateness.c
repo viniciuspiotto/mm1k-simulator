@@ -7,6 +7,7 @@ void start_metric (Metrics * metric, int size){
     metric->elements_in_window = 0;
     metric->total_lateness_request_met = 0.0;
     metric->total_requests_arrive_in_queue = 0.0;
+    start_queue(&(metric->queue), metric->schedule_size, 0);
 }
 
 Metrics * start_metrics(int amount, int size) {
@@ -15,6 +16,18 @@ Metrics * start_metrics(int amount, int size) {
         start_metric(&metrics[i], size);
     }
     return metrics;
+}
+
+void slide_window(Metrics * metric, double time, bool isArrival){
+
+    Element * element_dequeded = dequeue(&(metric->queue));
+    metric->elements_in_window--;
+    metric->total_requests_arrive_in_queue -= element_dequeded->arrival_time;
+
+    if(isArrival){
+        metric->total_lateness_request_met += (time - element_dequeded->arrival_time);
+    }
+    
 }
 
 void simulation_average_lateness(unsigned int interation, double simulation_time, Queue * queues, Metrics * metrics, double service_time_avarage) {
@@ -53,6 +66,7 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
     bool someone_arrived;
     
     while(current_elapsed_time.time <= simulation_time) {
+
         server_busy ?
             min_times(&current_elapsed_time, 4, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2], exit_time) :
             min_times(&current_elapsed_time, 3, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2]);
@@ -60,6 +74,7 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
         someone_arrived = current_elapsed_time.index != 3;
 
         if (someone_arrived) {
+
             int queue_index = current_elapsed_time.index;
             
             new_element.arrival_time = current_elapsed_time.time;
@@ -68,41 +83,46 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
             next_arrival_time[queue_index] = current_elapsed_time.time + generate_time(queues[queue_index].arrival_time_avarage);
 
             if (isInsert) {
+
                 update_little_information(&E_N, current_elapsed_time.time, true);
                 update_little_information(&E_W_ARRIVAL, current_elapsed_time.time, true);
-                metrics[current_queue].total_requests_arrive_in_queue += current_elapsed_time.time;
-                metrics[current_queue].elements_in_window++;
+
+                if (metrics[queue_index].elements_in_window >= metrics[queue_index].schedule_size) {
+                    slide_window(&metrics[queue_index], current_elapsed_time.time, false);
+                }
+                
+                metrics[queue_index].total_requests_arrive_in_queue += current_elapsed_time.time;
+                metrics[queue_index].elements_in_window++;
+                insert(&metrics[queue_index].queue, new_element);
+                
                if (!server_busy) {
                     server_busy = true;
                     current_queue = queue_index;
                     exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
-               } else {
-                    if (queues[queue_index].current_size == 1) {
-                        NodeMax* new_node = (NodeMax*)malloc(sizeof(NodeMax));
-                        new_node->index = queue_index;
-                        new_node->average_lateness = 0.0;
-                        insert_max_node(max_heap, new_node);
-                    }
+               } else if (queues[queue_index].current_size == 1) {
+                    NodeMax* new_node = (NodeMax*)malloc(sizeof(NodeMax));
+                    new_node->index = queue_index;
+                    new_node->average_lateness = 0.0;
+                    insert_max_node(max_heap, new_node);
                 }
             }
+
         } else {
+
             total_departures++;
 
-            Element * element_dequeded = dequeue(&queues[current_queue]);
+            slide_window(&metrics[current_queue], current_elapsed_time.time, true);
+            dequeue(&queues[current_queue]);
 
             update_little_information(&E_N, current_elapsed_time.time, false);
             update_little_information(&E_W_EXIT, current_elapsed_time.time, true);
-            
-            metrics[current_queue].elements_in_window--;
-            metrics[current_queue].total_requests_arrive_in_queue -= element_dequeded->arrival_time;
-            metrics[current_queue].total_lateness_request_met += (current_elapsed_time.time - element_dequeded->arrival_time);
 
             if (!is_empty(&queues[current_queue])) {
                 NodeMax* candidate_node = (NodeMax*)malloc(sizeof(NodeMax));
                 candidate_node->index = current_queue;
                 
                 if (metrics[current_queue].elements_in_window > 0) {
-                    candidate_node->average_lateness = (1.0 / metrics[current_queue].elements_in_window) * (queues[current_queue].current_size * current_elapsed_time.time - metrics[current_queue].total_requests_arrive_in_queue + metrics[current_queue].total_lateness_request_met);;
+                    candidate_node->average_lateness = (1.0 / metrics[current_queue].elements_in_window) * (queues[current_queue].current_size * current_elapsed_time.time - metrics[current_queue].total_requests_arrive_in_queue + metrics[current_queue].total_lateness_request_met);
                 } else {
                     candidate_node->average_lateness = 0.0;
                 }
