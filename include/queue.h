@@ -19,7 +19,7 @@ typedef struct {
 
 bool is_empty(Queue * queue);
 bool insert(Queue * queue, Element element);
-void dequeue(Queue * queue);
+Element * dequeue(Queue * queue);
 Element get_first(Queue * queue);
 Queue * start_queues (int amount, double * arrivals_time_avarage, int size);
 

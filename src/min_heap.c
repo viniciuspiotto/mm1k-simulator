@@ -1,7 +1,7 @@
 #include "min_heap.h"
 
-void swap(Node **a, Node **b) {
-    Node *temp = *a;
+void swap(NodeMin **a, NodeMin **b) {
+    NodeMin *temp = *a;
     *a = *b;
     *b = temp;
 }
@@ -10,7 +10,7 @@ MinHeap* create_min_heap(int capacity) {
     MinHeap* minHeap = (MinHeap*)malloc(sizeof(MinHeap));
     minHeap->capacity = capacity;
     minHeap->size = 0;
-    minHeap->arr = (Node**)malloc(capacity * sizeof(Node*));
+    minHeap->arr = (NodeMin**)malloc(capacity * sizeof(NodeMin*));
     return minHeap;
 }
 
@@ -45,7 +45,7 @@ void min_heapify(MinHeap* minHeap, int i) {
     }
 }
 
-void insert_node(MinHeap* minHeap, Node* node) {
+void insert_min_node(MinHeap* minHeap, NodeMin* node) {
     minHeap->size++;
     int i = minHeap->size - 1;
     minHeap->arr[i] = node;
@@ -62,7 +62,7 @@ int extract_min(MinHeap* minHeap) {
         return minHeap->arr[0]->index;
     }
 
-    Node* root_node = minHeap->arr[0];
+    NodeMin* root_node = minHeap->arr[0];
 
     minHeap->arr[0] = minHeap->arr[minHeap->size - 1];
     minHeap->size--;

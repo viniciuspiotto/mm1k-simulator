@@ -69,10 +69,10 @@ void simulation_longer_wait(unsigned int interation, double simulation_time, Que
             bool isInsert = insert(&queues[queue_index], new_element);
             
             if (server_busy && queues[queue_index].current_size == 1) {
-                Node* new_node = (Node*)malloc(sizeof(Node));
+                NodeMin* new_node = (NodeMin*)malloc(sizeof(NodeMin));
                 new_node->index = queue_index;
                 new_node->arrived_time = current_elapsed_time.time;
-                insert_node(min_heap, new_node);
+                insert_min_node(min_heap, new_node);
             } else if (!server_busy) {
                 server_busy = true;
                 dequeue(&queues[queue_index]);
@@ -101,10 +101,10 @@ void simulation_longer_wait(unsigned int interation, double simulation_time, Que
                 if (!is_empty(&queues[next_queue_index])) {
                     Element next_person = get_first(&queues[next_queue_index]);
                     
-                    Node* new_candidate_node = (Node*)malloc(sizeof(Node));
+                    NodeMin* new_candidate_node = (NodeMin*)malloc(sizeof(NodeMin));
                     new_candidate_node->index = next_queue_index;
                     new_candidate_node->arrived_time = next_person.arrival_time;
-                    insert_node(min_heap, new_candidate_node);
+                    insert_min_node(min_heap, new_candidate_node);
                 }
 
                 update_little_information(&E_N, current_elapsed_time.time, false);

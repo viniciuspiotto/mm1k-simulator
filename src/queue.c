@@ -28,11 +28,18 @@ bool insert(Queue * queue, Element element){
     return false;
 }
 
-void dequeue(Queue * queue) {
+Element * dequeue(Queue * queue) {
     if (!is_empty(queue)) {
+        Element * element_dequeue = malloc(sizeof(Element));
+
+        element_dequeue->arrival_time = queue->queue[queue->first].arrival_time;
+
         queue->first = (queue->first + 1) % queue->max_size;
-        queue->current_size--;    
+        queue->current_size--; 
+        
+        return element_dequeue;
     }
+    return NULL;
 }
 
 Element get_first(Queue * queue) {
