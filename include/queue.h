@@ -9,6 +9,7 @@
 
 typedef struct {
     double arrival_time;
+    double delay;
 } Element;
 
 typedef struct {
@@ -18,6 +19,7 @@ typedef struct {
 } Queue;
 
 bool is_empty(Queue * queue);
+void print_queue (Queue * queue);
 bool insert(Queue * queue, Element element);
 Element * dequeue(Queue * queue);
 Element get_first(Queue * queue);

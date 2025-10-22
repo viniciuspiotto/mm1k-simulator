@@ -4,10 +4,28 @@
 
 void start_metric (Metrics * metric, int size){
     metric->schedule_size = size;
+
     metric->elements_in_window = 0;
     metric->total_lateness_request_met = 0.0;
     metric->total_requests_arrive_in_queue = 0.0;
+
+    metric->total_served = 0;
     start_queue(&(metric->queue), metric->schedule_size, 0);
+}
+
+void print_metric (Metrics * metric, int current_index, double time, Queue * queue) {
+
+    printf("\n --- WINDOW %5d --- \n", current_index);
+    printf("T: %5d\n", metric->elements_in_window);
+    printf("D: %5.5f\n", metric->total_lateness_request_met);
+    printf("S: %5.5f\n", metric->total_requests_arrive_in_queue);
+    printf("EXITED: %d\n", metric->total_served);
+    printf("FINAL VALUE: %5.5f\n", (1.0 / metric->elements_in_window) * (queue->current_size * time - metric->total_requests_arrive_in_queue + metric->total_lateness_request_met));
+
+    printf("QUEUE: ");
+    print_queue (&metric->queue);
+    printf("\n");
+
 }
 
 Metrics * start_metrics(int amount, int size) {
@@ -18,19 +36,30 @@ Metrics * start_metrics(int amount, int size) {
     return metrics;
 }
 
-void slide_window(Metrics * metric, double time, bool isArrival){
+void slide_window(Metrics * metric, Element * element_dequeded, double time, bool isArrival){
 
-    Element * element_dequeded = dequeue(&(metric->queue));
-    metric->elements_in_window--;
-    metric->total_requests_arrive_in_queue -= element_dequeded->arrival_time;
 
     if(isArrival){
         metric->total_lateness_request_met += (time - element_dequeded->arrival_time);
+        int index = (metric->queue.first + metric->total_served) % metric->queue.max_size;
+        metric->queue.queue[index].delay = time - element_dequeded->arrival_time;
+        metric->total_requests_arrive_in_queue -= element_dequeded->arrival_time;
+    } else  {
+
+        metric->elements_in_window--;
+
+        if (metric->total_served > 0) {
+            metric->total_lateness_request_met -= element_dequeded->delay;
+            metric->total_served--;
+        } else {
+            metric->total_requests_arrive_in_queue -= element_dequeded->arrival_time;
+        }
+        
     }
     
 }
 
-void simulation_average_lateness(unsigned int interation, double simulation_time, Queue * queues, Metrics * metrics, double service_time_avarage) {
+void simulation_average_lateness(unsigned int interation, double simulation_time, Queue * queues, Metrics * metrics, double service_time_avarage, bool printOutput) {
 
     printf("\nInteração: [%d]\n", interation);
     
@@ -88,12 +117,14 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
                 update_little_information(&E_W_ARRIVAL, current_elapsed_time.time, true);
 
                 if (metrics[queue_index].elements_in_window >= metrics[queue_index].schedule_size) {
-                    slide_window(&metrics[queue_index], current_elapsed_time.time, false);
+                    Element * element_dequeded = dequeue(&metrics[queue_index].queue);
+                    slide_window(&metrics[queue_index], element_dequeded, current_elapsed_time.time, false);
                 }
-                
+
                 metrics[queue_index].total_requests_arrive_in_queue += current_elapsed_time.time;
                 metrics[queue_index].elements_in_window++;
                 insert(&metrics[queue_index].queue, new_element);
+                if (printOutput) print_metric(&metrics[queue_index], queue_index, current_elapsed_time.time, &queues[queue_index]);
                 
                if (!server_busy) {
                     server_busy = true;
@@ -111,8 +142,10 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
 
             total_departures++;
 
-            slide_window(&metrics[current_queue], current_elapsed_time.time, true);
-            dequeue(&queues[current_queue]);
+            Element * element_dequeded = dequeue(&queues[current_queue]);
+            slide_window(&metrics[current_queue], element_dequeded, current_elapsed_time.time, true);
+            metrics[current_queue].total_served++;
+            if (printOutput) print_metric(&metrics[current_queue], current_queue, current_elapsed_time.time, &queues[current_queue]);
 
             update_little_information(&E_N, current_elapsed_time.time, false);
             update_little_information(&E_W_EXIT, current_elapsed_time.time, true);

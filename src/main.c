@@ -15,7 +15,8 @@ int main() {
     srand(time(NULL));
     double service_time_rate;
     double arrival_time_rate[QUEUE_AMOUNT];
-    unsigned int n, queue_size, schedule_size;
+    unsigned int n, queue_size, schedule_size, printOutputOption;
+    bool printOutput;
 
     printf("--- Configuração da Simulação ---\n");
     
@@ -39,6 +40,21 @@ int main() {
     printf("Digite o tamanho da janela: ");
     scanf("%u", &schedule_size);
 
+    while(schedule_size < queue_size){
+        printf("Tamanho inválido: A janela deve ser maior ou igual que o tamanho das filas: ");
+        scanf("%u", &schedule_size);
+    }
+
+    printf("Digite (0. não | 1. sim) se deseja mostrar as saídas de cada janela a cada iteração: ");
+    scanf("%u", &printOutputOption);
+
+    while(printOutputOption != 0 && printOutputOption != 1){
+        printf("Opção Inválida (0.não | 1.sim): ");
+        scanf("%u", &printOutputOption);
+    }
+
+    printOutput = (printOutputOption == 1);
+
     printf("Número de iterações (n): ");
     scanf("%u", &n);
 
@@ -47,7 +63,7 @@ int main() {
     for (unsigned int i = 1; i <= n; i++) {
         Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, queue_size);
         Metrics * metrics = start_metrics(QUEUE_AMOUNT, schedule_size);
-        simulation_average_lateness(i, SIMULATION_TIME, queues, metrics, service_time_avarage);
+        simulation_average_lateness(i, SIMULATION_TIME, queues, metrics, service_time_avarage, printOutput);
         free(queues);
         free(metrics);
     }

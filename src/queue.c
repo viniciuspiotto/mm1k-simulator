@@ -4,8 +4,16 @@ bool is_full(Queue * queue){
     return (queue->current_size == queue->max_size);
 }
 
-bool is_empty(Queue * queue){
+bool is_empty (Queue * queue){
     return (queue->current_size == 0);
+}
+
+void print_queue(Queue * queue) {
+    for (int i = 0; i < queue->current_size; i++) {
+        int index = (queue->first + i) % queue->max_size;
+        printf(" [%.4f, %.4f] ", queue->queue[index].arrival_time, queue->queue[index].delay);
+    }
+    printf("\n");
 }
 
 void start_queue (Queue * queue, int size, double arrival_time_rate){
@@ -30,9 +38,11 @@ bool insert(Queue * queue, Element element){
 
 Element * dequeue(Queue * queue) {
     if (!is_empty(queue)) {
+
         Element * element_dequeue = malloc(sizeof(Element));
 
         element_dequeue->arrival_time = queue->queue[queue->first].arrival_time;
+        element_dequeue->delay = queue->queue[queue->first].delay;
 
         queue->first = (queue->first + 1) % queue->max_size;
         queue->current_size--; 
