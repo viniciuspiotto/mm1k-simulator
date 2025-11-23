@@ -23,7 +23,7 @@ void update_little_only_sum_area(little_metric *lm, double elapsed_time) {
 
 void simulation_longer_wait(GenericPerformanceMetrics *genericPerformanceMetrics,
     ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3], double simulation_time, 
-    Queue * queues, double service_time_avarage) {
+    Queue * queues, double service_time_avarage, bool isProblem) {
 
     float average_service_time = 0;
     unsigned int arrivals = 0;
@@ -58,8 +58,25 @@ void simulation_longer_wait(GenericPerformanceMetrics *genericPerformanceMetrics
     };
 
     Element new_element;
+    bool isLate = false, isNight = false;
 
     while(current_elapsed_time.time <= simulation_time) {
+
+        if(isProblem){
+            if(current_elapsed_time.time > 36000.0 && !isLate){
+                isLate = true;
+                queues[0].arrival_time_avarage=queues[0].arrival_time_avarage*2;
+                queues[1].arrival_time_avarage=queues[1].arrival_time_avarage*2;
+                queues[2].arrival_time_avarage=queues[2].arrival_time_avarage*2;
+            }
+
+            if(current_elapsed_time.time > 61200.0 && !isNight){
+                isNight = true;
+                queues[0].arrival_time_avarage=queues[0].arrival_time_avarage/2;
+                queues[1].arrival_time_avarage=queues[1].arrival_time_avarage/2;
+                queues[2].arrival_time_avarage=queues[2].arrival_time_avarage/2;
+            }
+        }
         
         server_busy ? 
             min_times(&current_elapsed_time, 4, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2], exit_time) :
@@ -71,7 +88,7 @@ void simulation_longer_wait(GenericPerformanceMetrics *genericPerformanceMetrics
             
             int queue_index = current_elapsed_time.index;
 
-            bool isPositive = (rand() % 100) <= odds[queue_index];
+            bool isPositive = ((double)rand() / RAND_MAX) < (odds[queue_index] / 100.0);
             positive_arrival += isPositive ? 1 : 0;
             new_element.isPositive = isPositive;
 
@@ -160,7 +177,6 @@ void simulation_longer_wait(GenericPerformanceMetrics *genericPerformanceMetrics
         
     (*problemPerformanceMetrics).fairness = fairness_jain(x, 3);
     (*problemPerformanceMetrics).recall = (float)positive_served / (float)positive_arrival;
-    (*problemPerformanceMetrics).precision = (float)positive_served / (float)total_departures;
 
     free_min_heap(min_heap);
 }

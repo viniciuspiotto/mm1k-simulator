@@ -3,7 +3,7 @@
 const double SIMULATION_TIME = 86400.0;
 const unsigned int QUEUE_AMOUNT = 3;
 
-double metric_result_simulation(int simulation_type, int metric, double odds[3], Queue * queues, double service_time_avarage, bool printOutput, int window_size){
+double metric_result_simulation(int simulation_type, int metric, double odds[3], Queue * queues, double service_time_avarage, bool printOutput, int window_size, bool isProblem){
     
     GenericPerformanceMetrics genericPerformanceMetrics;
     ProblemPerformanceMetrics problemPerformanceMetrics; 
@@ -11,15 +11,15 @@ double metric_result_simulation(int simulation_type, int metric, double odds[3],
     switch (simulation_type) {
         case 0: {
             Metrics * metrics = start_metrics(QUEUE_AMOUNT, window_size);
-            simulation_average_lateness(&genericPerformanceMetrics, &problemPerformanceMetrics, odds, SIMULATION_TIME, queues, metrics, service_time_avarage, printOutput);
+            simulation_average_lateness(&genericPerformanceMetrics, &problemPerformanceMetrics, odds, SIMULATION_TIME, queues, metrics, service_time_avarage, printOutput, isProblem);
             free(metrics);
             break;
         }
         case 1:
-            simulation_longer_wait(&genericPerformanceMetrics, &problemPerformanceMetrics, odds, SIMULATION_TIME, queues, service_time_avarage);
+            simulation_longer_wait(&genericPerformanceMetrics, &problemPerformanceMetrics, odds, SIMULATION_TIME, queues, service_time_avarage, isProblem);
             break;
         case 2:
-            simulation_round_robin(&genericPerformanceMetrics, &problemPerformanceMetrics, odds, SIMULATION_TIME, queues, service_time_avarage);
+            simulation_round_robin(&genericPerformanceMetrics, &problemPerformanceMetrics, odds, SIMULATION_TIME, queues, service_time_avarage, isProblem);
             break;
     }
 
@@ -39,14 +39,11 @@ double metric_result_simulation(int simulation_type, int metric, double odds[3],
         case 4:
             return problemPerformanceMetrics.recall;
             break;
-        case 5:
-            return problemPerformanceMetrics.precision;
-            break;
     }
     return 0.0;
 }
 
-long quantity_samples (int simulation_type, int metric, double odds[3], double * arrival_time_rate, int queue_size, double service_time_avarage, bool printOutput, int window_size){
+long quantity_samples (int simulation_type, int metric, double odds[3], double * arrival_time_rate, int queue_size, double service_time_avarage, bool printOutput, int window_size, bool isProblem){
 
     double average = 0;
     int number_samples = 10;
@@ -57,7 +54,7 @@ long quantity_samples (int simulation_type, int metric, double odds[3], double *
 
     for(int k = 0; k < number_samples; k++){
         queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, queue_size);
-        double metric_value = metric_result_simulation(simulation_type, metric, odds, queues, service_time_avarage, printOutput, window_size);
+        double metric_value = metric_result_simulation(simulation_type, metric, odds, queues, service_time_avarage, printOutput, window_size, isProblem);
         free_queues(queues, QUEUE_AMOUNT);
         average += metric_value;
         samples[k] = metric_value;
@@ -109,7 +106,7 @@ void service_time_variation(double arrival_time_rate[3], int queue_size, double 
             for(int i = 0; i < steps; i ++){ 
 
                 double current_metric = 0;
-                quantity_samples_calculated = quantity_samples(j, y, odds, arrival_time_rate, queue_size, service_time_rate, false, queue_size);
+                quantity_samples_calculated = quantity_samples(j, y, odds, arrival_time_rate, queue_size, service_time_rate, false, queue_size, false);
 
                 for(int x = 0; x < quantity_samples_calculated; x++){
                     progress(
@@ -119,7 +116,7 @@ void service_time_variation(double arrival_time_rate[3], int queue_size, double 
                             x
                         );
                     Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, queue_size);
-                    current_metric += metric_result_simulation(j, y, odds, queues, service_time_rate, false, queue_size);
+                    current_metric += metric_result_simulation(j, y, odds, queues, service_time_rate, false, queue_size, false);
                     free_queues(queues, QUEUE_AMOUNT);
                 }
 
@@ -150,11 +147,10 @@ void queue_size_variation(double arrival_time_rate[3], int j, double service_tim
 
     char *metrics_names[] = {
         "fairness", 
-        "recall", 
-        "precision"
+        "recall",
     };
 
-    for (int y = 3; y < 6; y++){ 
+    for (int y = 3; y < 5; y++){ 
 
         sprintf(nome_arquivo, "results/problem/%s/%s.csv", charts_name, metrics_names[y-3]);
         f = fopen(nome_arquivo, "w");
@@ -176,12 +172,12 @@ void queue_size_variation(double arrival_time_rate[3], int j, double service_tim
             if (j != 0) {
 
                 double current_metric = 0;
-                quantity_samples_calculated = quantity_samples(j, y, odds, arrival_time_rate, queue_size, service_time_rate, false, queue_size);
+                quantity_samples_calculated = quantity_samples(j, y, odds, arrival_time_rate, queue_size, service_time_rate, false, queue_size, true);
             
                 for(int x = 0; x < quantity_samples_calculated; x++){
                     progress(steps * quantity_samples_calculated, i * quantity_samples_calculated + x);
                     Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, queue_size);
-                    current_metric += metric_result_simulation(j, y, odds, queues, service_time_rate, false, queue_size);
+                    current_metric += metric_result_simulation(j, y, odds, queues, service_time_rate, false, queue_size, true);
                     free_queues(queues, QUEUE_AMOUNT);
                 }
 
@@ -195,12 +191,12 @@ void queue_size_variation(double arrival_time_rate[3], int j, double service_tim
                     double current_metric = 0;
                     int current_window_size = queue_size;
                     if (t != 0) current_window_size = queue_size*pow(2,t);
-                    quantity_samples_calculated = quantity_samples(j, y, odds, arrival_time_rate, queue_size, service_time_rate, false, current_window_size);
+                    quantity_samples_calculated = quantity_samples(j, y, odds, arrival_time_rate, queue_size, service_time_rate, false, current_window_size, true);
                     
                     for(int x = 0; x < quantity_samples_calculated; x++){
                         progress(steps * quantity_samples_calculated, i * quantity_samples_calculated + x);
                         Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, queue_size);
-                        current_metric += metric_result_simulation(j, y, odds, queues, service_time_rate, false, queue_size);
+                        current_metric += metric_result_simulation(j, y, odds, queues, service_time_rate, false, queue_size, true);
                         free_queues(queues, QUEUE_AMOUNT);
                     }
 

@@ -21,6 +21,6 @@ Metrics * start_metrics(int amount, int size);
 void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMetrics,
     ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3],
      double simulation_time, Queue * queues, Metrics * metrics, 
-    double service_time_avarage, bool printOutput);
+    double service_time_avarage, bool printOutput, bool isProblem);
 
 #endif

@@ -14,13 +14,11 @@ typedef struct {
     double througput;
     double average_response_time;
     double blocking_probability;
-    double occupancy;
 } GenericPerformanceMetrics;
 
 typedef struct {
     double fairness;
     double recall;
-    double precision;
 } ProblemPerformanceMetrics;
 
 double random_u();

@@ -12,6 +12,6 @@
 void simulation_round_robin(GenericPerformanceMetrics *genericPerformanceMetrics,
     ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3], 
     double simulation_time, 
-    Queue * queues, double service_time_avarage);
+    Queue * queues, double service_time_avarage, bool isProblem);
 
 #endif

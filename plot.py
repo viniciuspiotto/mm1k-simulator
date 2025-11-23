@@ -181,7 +181,7 @@ for metric_folder in generic_folders:
 
 policy_base_folder = "results/problem"
 policy_folders = ["longer_Wait", "round_robin", "avarage_lateness"]
-policy_files = ["fairness.csv", "precision.csv", "recall.csv"]
+policy_files = ["fairness.csv", "recall.csv"]
 
 graphic_labels = {
     "fairness": "Justiça",
@@ -194,7 +194,7 @@ for file in policy_files:
     plot_3d_policies(graphic_name, graphic_labels)
 
 lateness_folder = "results/problem/avarage_lateness"
-lateness_files = ["fairness.csv", "precision.csv", "recall.csv"]
+lateness_files = ["fairness.csv", "recall.csv"]
 
 metric_labels = {
     "fairness": "Justiça",

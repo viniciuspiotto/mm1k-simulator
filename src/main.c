@@ -32,7 +32,7 @@ int main() {
     }
 
     double arrival_time_rate_problem[] = {0.53, 0.37, 0.10};
-    double service_time_rate = 0.6;
+    double service_time_rate = 1;
     char *charts_name[] = {
         "avarage_lateness", 
         "longer_Wait", 

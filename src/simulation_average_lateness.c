@@ -56,7 +56,7 @@ void slide_window(Metrics * metric, Element * element_dequeded, double time, boo
 void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMetrics,
     ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3],
     double simulation_time, Queue * queues, Metrics * metrics, 
-    double service_time_avarage, bool printOutput) {
+    double service_time_avarage, bool printOutput, bool isProblem) {
     
     double exit_time = DBL_MAX;
 
@@ -92,9 +92,26 @@ void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMe
 
     Element new_element;
     bool someone_arrived;
+    bool isLate = false, isNight = false;
     
     while(current_elapsed_time.time <= simulation_time) {
 
+        if(isProblem){
+            if(current_elapsed_time.time > 36000.0 && !isLate){
+                isLate = true;
+                queues[0].arrival_time_avarage=queues[0].arrival_time_avarage*2;
+                queues[1].arrival_time_avarage=queues[1].arrival_time_avarage*2;
+                queues[2].arrival_time_avarage=queues[2].arrival_time_avarage*2;
+            }
+
+            if(current_elapsed_time.time > 61200.0 && !isNight){
+                isNight = true;
+                queues[0].arrival_time_avarage=queues[0].arrival_time_avarage/2;
+                queues[1].arrival_time_avarage=queues[1].arrival_time_avarage/2;
+                queues[2].arrival_time_avarage=queues[2].arrival_time_avarage/2;
+            }
+        }
+        
         server_busy ?
             min_times(&current_elapsed_time, 4, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2], exit_time) :
             min_times(&current_elapsed_time, 3, next_arrival_time[0], next_arrival_time[1], next_arrival_time[2]);
@@ -106,7 +123,7 @@ void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMe
             arrivals++;
 
             int queue_index = current_elapsed_time.index;
-            bool isPositive = (rand() % 100) <= odds[queue_index];
+            bool isPositive = ((double)rand() / RAND_MAX) < (odds[queue_index] / 100.0);
 
             positive_arrival += isPositive ? 1 : 0;
             
@@ -194,6 +211,7 @@ void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMe
     double lambda = E_W_ARRIVAL.qnt_persons/current_elapsed_time.time;
     double erro_little = E_N_FINAL - lambda * E_W_FINAL;
     (void) erro_little;
+
     (*genericPerformanceMetrics).througput = total_departures / current_elapsed_time.time;
     (*genericPerformanceMetrics).average_response_time = average_service_time / total_departures;
     (*genericPerformanceMetrics).blocking_probability = (float)blockeds / (float)arrivals;
@@ -206,6 +224,5 @@ void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMe
 
     (*problemPerformanceMetrics).fairness = fairness_jain(x, 3);
     (*problemPerformanceMetrics).recall = (float)positive_served / (float)positive_arrival;
-    (*problemPerformanceMetrics).precision = (float)positive_served / (float)total_departures;
 
 }
