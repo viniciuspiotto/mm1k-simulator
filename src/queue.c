@@ -19,7 +19,7 @@ void print_queue(Queue * queue) {
 void start_queue (Queue * queue, int size, double arrival_time_rate){
     queue->max_size = size;
     queue->current_size = 0;
-    queue->arrival_time_avarage = 1.0 / arrival_time_rate;
+    queue->arrival_time_avarage = arrival_time_rate;
     queue->first = 0;
     queue->last = -1;
     queue->qnt_persons = 0;
@@ -43,6 +43,7 @@ Element * dequeue(Queue * queue) {
 
         element_dequeue->arrival_time = queue->queue[queue->first].arrival_time;
         element_dequeue->delay = queue->queue[queue->first].delay;
+        element_dequeue->isPositive = queue->queue[queue->first].isPositive;
 
         queue->first = (queue->first + 1) % queue->max_size;
         queue->current_size--; 
@@ -62,4 +63,15 @@ Queue * start_queues (int amount, double * arrivals_time_avarage, int size){
         start_queue(&queues[i], size, arrivals_time_avarage[i]);
     }
     return queues;
+}
+
+void free_queue(Queue *queue) {
+    free(queue->queue);
+}
+
+void free_queues(Queue *queues, int amount) {
+    for (int i = 0; i < amount; i++) {
+        free_queue(&queues[i]);
+    }
+    free(queues);
 }

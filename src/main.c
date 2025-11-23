@@ -2,71 +2,49 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "statistic.h"
 #include "queue.h"
 #include "simulation_longer_wait.h"
 #include "simulation_round_robin.h"
 #include "simulation_average_lateness.h"
 
-const double SIMULATION_TIME = 86400.0; // 24 * 60 * 60 (24 hours)
-const unsigned int QUEUE_AMOUNT = 3;
-
 int main() {
 
     srand(time(NULL));
-    double service_time_rate;
-    double arrival_time_rate[QUEUE_AMOUNT];
-    unsigned int n, queue_size, schedule_size, printOutputOption;
-    bool printOutput;
-
-    printf("--- Configuração da Simulação ---\n");
     
-    printf("Digite a taxa de serviço (μ): ");
-    scanf("%lf", &service_time_rate);
-    
-    const double service_time_avarage = 1.0 / service_time_rate;
+    double arrival_time_rate[3][3] = {
+        {0.5, 0.5, 0.5},  
+        {0.3, 0.5, 1},  
+        {0.7, 0.7, 2}   
+    };
 
-    printf("Digite a taxa de chegada para a Fila 1 (λ1): ");
-    scanf("%lf", &arrival_time_rate[0]);
+    char *arrival_time_rate_names[] = {
+        "same_arrival_time_rate", 
+        "low_to_high_arrival_time_rate", 
+        "high_arrival_time_rate"
+    };
+    int queue_size = 100;
+    double odds[] = {0.16, 0.38, 0.01};
 
-    printf("Digite a taxa de chegada para a Fila 2 (λ2): ");
-    scanf("%lf", &arrival_time_rate[1]);
-
-    printf("Digite a taxa de chegada para a Fila 3 (λ3): ");
-    scanf("%lf", &arrival_time_rate[2]);
-
-    printf("Digite o tamanho das filas: ");
-    scanf("%u", &queue_size);
-
-    printf("Digite o tamanho da janela: ");
-    scanf("%u", &schedule_size);
-
-    while(schedule_size < queue_size){
-        printf("Tamanho inválido: A janela deve ser maior ou igual que o tamanho das filas: ");
-        scanf("%u", &schedule_size);
+    for(int i = 0; i < 3; i++){
+        printf("\n\n\tSimulation to %s started:\n", arrival_time_rate_names[i]);
+        service_time_variation(arrival_time_rate[i], queue_size, odds, arrival_time_rate_names[i]);
     }
 
-    printf("Digite (0. não | 1. sim) se deseja mostrar as saídas de cada janela a cada iteração: ");
-    scanf("%u", &printOutputOption);
+    double arrival_time_rate_problem[] = {0.53, 0.37, 0.10};
+    double service_time_rate = 0.6;
+    char *charts_name[] = {
+        "avarage_lateness", 
+        "longer_Wait", 
+        "round_robin"
+    };
 
-    while(printOutputOption != 0 && printOutputOption != 1){
-        printf("Opção Inválida (0.não | 1.sim): ");
-        scanf("%u", &printOutputOption);
+    for(int i = 0; i < 3; i++){
+        printf("\n\n\tSimulation to %s started:\n", charts_name[i]);
+        queue_size_variation(arrival_time_rate_problem, i, service_time_rate, odds, charts_name[i]);
     }
 
-    printOutput = (printOutputOption == 1);
-
-    printf("Número de iterações (n): ");
-    scanf("%u", &n);
-
-    printf("----------------------------------\n\n");
-    
-    for (unsigned int i = 1; i <= n; i++) {
-        Queue * queues = start_queues(QUEUE_AMOUNT, arrival_time_rate, queue_size);
-        Metrics * metrics = start_metrics(QUEUE_AMOUNT, schedule_size);
-        simulation_average_lateness(i, SIMULATION_TIME, queues, metrics, service_time_avarage, printOutput);
-        free(queues);
-        free(metrics);
-    }
+    printf("\n");
 
     return 0;
 }

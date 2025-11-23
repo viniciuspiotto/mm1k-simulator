@@ -2,9 +2,16 @@
 
 #define DBL_MAX __DBL_MAX__
 
-void simulation_round_robin(unsigned int interation, double simulation_time, Queue * queues, double service_time_avarage) {
+void simulation_round_robin(GenericPerformanceMetrics *genericPerformanceMetrics,
+    ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3], double simulation_time, 
+    Queue * queues, double service_time_avarage) {
 
-    printf("\nInteração: [%d]\n", interation);
+    float average_service_time = 0;
+    unsigned int arrivals = 0;
+    unsigned int blockeds = 0;
+    unsigned int positive_served = 0; 
+    unsigned int positive_arrival = 0;
+    unsigned int total_served[] = {0,0,0};
     
     double exit_time = DBL_MAX;
 
@@ -43,27 +50,41 @@ void simulation_round_robin(unsigned int interation, double simulation_time, Que
         someone_arrived = current_elapsed_time.index < 3;
 
         if (someone_arrived) {
+
+            arrivals++;
+
             int queue_index = current_elapsed_time.index;
+
+            bool isPositive = (rand() % 100) <= odds[queue_index];
+            positive_arrival += isPositive ? 1 : 0;
             
             new_element.arrival_time = current_elapsed_time.time;
+            new_element.isPositive = isPositive;
             bool isInsert = insert(&queues[queue_index], new_element);
-
+            
             next_arrival_time[queue_index] = current_elapsed_time.time + generate_time(queues[queue_index].arrival_time_avarage);
 
             if (isInsert) {
                 if (!server_busy) {
                     server_busy = true;
-                    dequeue(&queues[queue_index]);
+                    Element * element_dequeded = dequeue(&queues[queue_index]);
                     exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
                     current_queue = queue_index;
+                    free(element_dequeded);
+                    element_dequeded = NULL;
                 }
                 update_little_information(&E_N, current_elapsed_time.time, true);
                 update_little_information(&E_W_ARRIVAL, current_elapsed_time.time, true);
+            } else {
+                blockeds++;
             }
+
         } else {
+
             total_departures++;
 
             if (!is_empty(&queues[0]) || !is_empty(&queues[1]) || !is_empty(&queues[2])) {
+
                 if(is_empty(&queues[current_queue])){
                     for(int i = 0; i < 3; i++){
                         current_queue = (current_queue + 1) % 3;
@@ -73,11 +94,21 @@ void simulation_round_robin(unsigned int interation, double simulation_time, Que
                     }
                 }
 
-                dequeue(&queues[current_queue]);
+                total_served[current_queue]++;
+
+                Element * element_dequeded = dequeue(&queues[current_queue]);
+                positive_served += (*element_dequeded).isPositive ? 1 : 0;
                 exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
+                average_service_time += exit_time - (*element_dequeded).arrival_time;
 
                 update_little_information(&E_N, current_elapsed_time.time, false);
                 update_little_information(&E_W_EXIT, current_elapsed_time.time, true);
+
+                free(element_dequeded);
+                element_dequeded = NULL;
+
+                current_queue = (current_queue + 1) % 3;
+
             } else {
                 server_busy = false;
                 exit_time = DBL_MAX;
@@ -93,12 +124,21 @@ void simulation_round_robin(unsigned int interation, double simulation_time, Que
 
     double lambda = E_W_ARRIVAL.qnt_persons/current_elapsed_time.time;
 
-    printf("\nE_W persons: %ld current_elapsed_time.time: %.8f lambda: %.8f\n\n", E_W_ARRIVAL.qnt_persons, current_elapsed_time.time, lambda);
-
     double erro_little = E_N_FINAL - lambda * E_W_FINAL;
+    (void) erro_little;
+    
+    (*genericPerformanceMetrics).througput = total_departures / current_elapsed_time.time;
+    (*genericPerformanceMetrics).average_response_time = average_service_time / total_departures;
+    (*genericPerformanceMetrics).blocking_probability = (float)blockeds / (float)arrivals;
 
-    printf("E[N]: %.3f\n", E_N_FINAL);
-    printf("E[W]: %.3f\n", E_W_FINAL);
-    printf("little: %.10f\n", erro_little);
+    float x[3] = {
+        ((double)total_served[0]/current_elapsed_time.time) / queues[0].arrival_time_avarage,
+        ((double)total_served[1]/current_elapsed_time.time) / queues[1].arrival_time_avarage,
+        ((double)total_served[2]/current_elapsed_time.time) / queues[2].arrival_time_avarage
+    };
+
+    (*problemPerformanceMetrics).fairness = fairness_jain(x, 3);
+    (*problemPerformanceMetrics).recall = (float)positive_served / (float)positive_arrival;
+    (*problemPerformanceMetrics).precision = (float)positive_served / (float)total_departures;
 
 }

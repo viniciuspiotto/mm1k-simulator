@@ -4,7 +4,6 @@
 
 void start_metric (Metrics * metric, int size){
     metric->schedule_size = size;
-
     metric->elements_in_window = 0;
     metric->total_lateness_request_met = 0.0;
     metric->total_requests_arrive_in_queue = 0.0;
@@ -38,35 +37,38 @@ Metrics * start_metrics(int amount, int size) {
 
 void slide_window(Metrics * metric, Element * element_dequeded, double time, bool isArrival){
 
-
     if(isArrival){
         metric->total_lateness_request_met += (time - element_dequeded->arrival_time);
         int index = (metric->queue.first + metric->total_served) % metric->queue.max_size;
         metric->queue.queue[index].delay = time - element_dequeded->arrival_time;
         metric->total_requests_arrive_in_queue -= element_dequeded->arrival_time;
     } else  {
-
         metric->elements_in_window--;
-
         if (metric->total_served > 0) {
             metric->total_lateness_request_met -= element_dequeded->delay;
             metric->total_served--;
         } else {
             metric->total_requests_arrive_in_queue -= element_dequeded->arrival_time;
         }
-        
     }
-    
 }
 
-void simulation_average_lateness(unsigned int interation, double simulation_time, Queue * queues, Metrics * metrics, double service_time_avarage, bool printOutput) {
-
-    printf("\nInteração: [%d]\n", interation);
+void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMetrics,
+    ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3],
+    double simulation_time, Queue * queues, Metrics * metrics, 
+    double service_time_avarage, bool printOutput) {
     
     double exit_time = DBL_MAX;
 
     int current_queue = 0;
     bool server_busy = false;
+
+    float average_service_time = 0;
+    unsigned int arrivals = 0;
+    unsigned int blockeds = 0;
+    unsigned int positive_served = 0; 
+    unsigned int positive_arrival = 0;
+    unsigned int total_served_current[] = {0,0,0};
 
     Elapsed_Time current_elapsed_time;
     current_elapsed_time.time = 0.0;
@@ -89,9 +91,6 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
     };
 
     Element new_element;
-
-    MaxHeap* max_heap = create_max_heap(3);
-
     bool someone_arrived;
     
     while(current_elapsed_time.time <= simulation_time) {
@@ -104,9 +103,15 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
 
         if (someone_arrived) {
 
+            arrivals++;
+
             int queue_index = current_elapsed_time.index;
+            bool isPositive = (rand() % 100) <= odds[queue_index];
+
+            positive_arrival += isPositive ? 1 : 0;
             
             new_element.arrival_time = current_elapsed_time.time;
+            new_element.isPositive = isPositive;
             bool isInsert = insert(&queues[queue_index], new_element);
 
             next_arrival_time[queue_index] = current_elapsed_time.time + generate_time(queues[queue_index].arrival_time_avarage);
@@ -119,6 +124,8 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
                 if (metrics[queue_index].elements_in_window >= metrics[queue_index].schedule_size) {
                     Element * element_dequeded = dequeue(&metrics[queue_index].queue);
                     slide_window(&metrics[queue_index], element_dequeded, current_elapsed_time.time, false);
+                    free(element_dequeded);
+                    element_dequeded = NULL;
                 }
 
                 metrics[queue_index].total_requests_arrive_in_queue += current_elapsed_time.time;
@@ -130,12 +137,9 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
                     server_busy = true;
                     current_queue = queue_index;
                     exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
-               } else if (queues[queue_index].current_size == 1) {
-                    NodeMax* new_node = (NodeMax*)malloc(sizeof(NodeMax));
-                    new_node->index = queue_index;
-                    new_node->average_lateness = 0.0;
-                    insert_max_node(max_heap, new_node);
-                }
+                } 
+            } else {
+                blockeds++;
             }
 
         } else {
@@ -143,34 +147,41 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
             total_departures++;
 
             Element * element_dequeded = dequeue(&queues[current_queue]);
+            positive_served += (*element_dequeded).isPositive ? 1 : 0;
             slide_window(&metrics[current_queue], element_dequeded, current_elapsed_time.time, true);
+            total_served_current[current_queue]++;
             metrics[current_queue].total_served++;
+
             if (printOutput) print_metric(&metrics[current_queue], current_queue, current_elapsed_time.time, &queues[current_queue]);
 
-            update_little_information(&E_N, current_elapsed_time.time, false);
-            update_little_information(&E_W_EXIT, current_elapsed_time.time, true);
-
-            if (!is_empty(&queues[current_queue])) {
-                NodeMax* candidate_node = (NodeMax*)malloc(sizeof(NodeMax));
-                candidate_node->index = current_queue;
-                
-                if (metrics[current_queue].elements_in_window > 0) {
-                    candidate_node->average_lateness = (1.0 / metrics[current_queue].elements_in_window) * (queues[current_queue].current_size * current_elapsed_time.time - metrics[current_queue].total_requests_arrive_in_queue + metrics[current_queue].total_lateness_request_met);
-                } else {
-                    candidate_node->average_lateness = 0.0;
+            int index_max_value = -1;
+            float max_value = -1;
+            float temp;
+            for (int i = 0; i < 3; i++){
+                if(metrics[i].elements_in_window > 0 && !is_empty(&queues[i])){
+                    temp = (1.0 / metrics[i].elements_in_window) * (queues[i].current_size * current_elapsed_time.time - metrics[i].total_requests_arrive_in_queue + metrics[i].total_lateness_request_met);
+                    if(temp > max_value){
+                        max_value = temp;
+                        index_max_value = i;
+                    }
                 }
-                insert_max_node(max_heap, candidate_node);
             }
 
-            if (max_heap->size > 0) {
-                int next_queue_index = extract_max(max_heap);
-                current_queue = next_queue_index; 
+            if (index_max_value > -1) {
+                current_queue = index_max_value; 
                 exit_time = current_elapsed_time.time + generate_time(service_time_avarage);
+                average_service_time += exit_time - (*element_dequeded).arrival_time;
             } else {
                 server_busy = false;
                 exit_time = DBL_MAX;
                 current_queue = -1;
             }
+
+            update_little_information(&E_N, current_elapsed_time.time, false);
+            update_little_information(&E_W_EXIT, current_elapsed_time.time, true);
+            free(element_dequeded);
+            element_dequeded = NULL;
+
         }
     }
 
@@ -181,13 +192,20 @@ void simulation_average_lateness(unsigned int interation, double simulation_time
     double E_W_FINAL = (E_W_ARRIVAL.sum_area - E_W_EXIT.sum_area) / E_W_ARRIVAL.qnt_persons;
 
     double lambda = E_W_ARRIVAL.qnt_persons/current_elapsed_time.time;
-
-    printf("\nE_W persons: %ld current_elapsed_time.time: %.8f lambda: %.8f\n\n", E_W_ARRIVAL.qnt_persons, current_elapsed_time.time, lambda);
-
     double erro_little = E_N_FINAL - lambda * E_W_FINAL;
+    (void) erro_little;
+    (*genericPerformanceMetrics).througput = total_departures / current_elapsed_time.time;
+    (*genericPerformanceMetrics).average_response_time = average_service_time / total_departures;
+    (*genericPerformanceMetrics).blocking_probability = (float)blockeds / (float)arrivals;
 
-    printf("E[N]: %.3f\n", E_N_FINAL);
-    printf("E[W]: %.3f\n", E_W_FINAL);
-    printf("little: %.10f\n", erro_little);
+    float x[3] = {
+        ((double)total_served_current[0]/current_elapsed_time.time) / queues[0].arrival_time_avarage,
+        ((double)total_served_current[1]/current_elapsed_time.time) / queues[1].arrival_time_avarage,
+        ((double)total_served_current[2]/current_elapsed_time.time) / queues[2].arrival_time_avarage
+    };
+
+    (*problemPerformanceMetrics).fairness = fairness_jain(x, 3);
+    (*problemPerformanceMetrics).recall = (float)positive_served / (float)positive_arrival;
+    (*problemPerformanceMetrics).precision = (float)positive_served / (float)total_departures;
 
 }

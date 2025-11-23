@@ -68,8 +68,8 @@ int extract_min(MinHeap* minHeap) {
     minHeap->size--;
 
     min_heapify(minHeap, 0);
-
     return root_node->index;
+    
 }
 
 void free_min_heap(MinHeap* minHeap) {

@@ -8,7 +8,6 @@
 #include "little.h"
 #include "utils.h"
 #include "queue.h"
-#include "max_heap.h"
 
 typedef struct {
     unsigned int elements_in_window;
@@ -19,6 +18,9 @@ typedef struct {
 } Metrics;
 
 Metrics * start_metrics(int amount, int size);
-void simulation_average_lateness(unsigned int interation, double simulation_time, Queue * queues, Metrics * metrics, double  service_time_avarage, bool printOutput);
+void simulation_average_lateness(GenericPerformanceMetrics *genericPerformanceMetrics,
+    ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3],
+     double simulation_time, Queue * queues, Metrics * metrics, 
+    double service_time_avarage, bool printOutput);
 
 #endif

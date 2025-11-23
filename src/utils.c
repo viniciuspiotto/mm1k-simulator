@@ -43,3 +43,30 @@ void min_times(Elapsed_Time *result, int count, ...) {
 
     va_end(args);
 }
+
+void progress(int max_value, int current_value) {
+
+    float percent = (float)current_value / max_value * 100.0;
+    int prints = (int)(percent / 10.0);
+
+    printf("\r\t[");
+
+    for (int i = 0; i < prints; i++) {
+        printf("=");
+    }
+    for (int j = 0; j < 10 - prints; j++) {
+        printf("-");
+    }
+
+    printf("] %.0f%%", percent);
+    fflush(stdout);
+}
+
+float fairness_jain(float x[], int n) {
+    float sum = 0.0f, sum_sq = 0.0f;
+    for (int i = 0; i < n; i++) {
+        sum += x[i];
+        sum_sq += x[i] * x[i];
+    }
+    return (sum * sum) / (n * sum_sq);
+}
