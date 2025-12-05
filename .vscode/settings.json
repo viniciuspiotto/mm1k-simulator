@@ -4,6 +4,8 @@
         "min_heap.h": "c",
         "math.h": "c",
         "simulation_longer_wait.h": "c",
-        "simulation_round_robin.h": "c"
+        "simulation_round_robin.h": "c",
+        "simulation_average_lateness.h": "c",
+        "queue.h": "c"
     }
 }

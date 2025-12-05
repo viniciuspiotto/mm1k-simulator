@@ -9,6 +9,8 @@
 
 typedef struct {
     double arrival_time;
+    double delay;
+    bool isPositive;
 } Element;
 
 typedef struct {
@@ -18,9 +20,12 @@ typedef struct {
 } Queue;
 
 bool is_empty(Queue * queue);
+void print_queue (Queue * queue);
 bool insert(Queue * queue, Element element);
-void dequeue(Queue * queue);
+Element * dequeue(Queue * queue);
 Element get_first(Queue * queue);
+void start_queue (Queue * queue, int size, double arrival_time_rate);
 Queue * start_queues (int amount, double * arrivals_time_avarage, int size);
+void free_queues(Queue *queues, int amount);
 
 #endif

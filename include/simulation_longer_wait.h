@@ -10,6 +10,9 @@
 #include "little.h"
 #include "min_heap.h"
 
-void simulation_longer_wait(unsigned int interation, double simulation_time, Queue * queues, double  service_time_avarage);
+void simulation_longer_wait(GenericPerformanceMetrics *genericPerformanceMetrics, 
+    ProblemPerformanceMetrics *problemPerformanceMetrics, double odds[3], 
+    double simulation_time, 
+    Queue * queues, double service_time_avarage, bool isProblem);
 
 #endif
